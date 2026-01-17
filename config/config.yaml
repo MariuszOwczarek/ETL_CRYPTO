@@ -1,0 +1,12 @@
+api:
+  endpoint: 'https://api.coingecko.com/api/v3/coins/markets'
+  crypto: ['bitcoin', 'ethereum', 'ripple']
+  currency: 'usd'
+
+paths:
+  raw: 'data/raw'
+  processed: 'data/processed'
+  output: 'data/output'
+  logs: 'logs'
+  tests: 'tests'
+
