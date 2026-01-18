@@ -1,7 +1,6 @@
-import os
-from etl.fetcher import DataFetcher
-from etl.cleaner import DataCleaner
-from etl.directory_manager import DirectoryManager
+from etl.fetcher import DataFetcher, DataObjectFetcher
+from etl.cleaner import DataCleaner, DataObjectCleaner
+from etl.directory_manager import DirectoryManager, ResultObjectInfrastructure
 from etl.pyspark_builder import SparkDataset
 
 
@@ -25,35 +24,32 @@ class ETLPipeline:
             url=self.api_conf['endpoint']
         )
 
-        self.data_cleaner = DataCleaner(self.paths_conf['raw'])
+        self.data_cleaner = DataCleaner()
         self.spark_builder = SparkDataset()
 
-    def ensure_dirs(self):
+    def ensure_dirs(self) -> ResultObjectInfrastructure:
         """Tworzenie folderów jeśli nie istnieją"""
-        self.directory_manager.ensure_directory()
+        dirs = self.directory_manager.ensure_directory()
+        return dirs
 
-    def fetch(self):
+    def fetch(self) -> DataObjectFetcher:
         """Pobranie danych z API i zapis w folderze raw"""
-        data = self.data_fetcher.get_data()
-        filename = self.data_fetcher.create_filename()
-        self.data_fetcher.save_data(data, self.paths_conf['raw'], filename)
-        return filename
+        raw = self.data_fetcher.get_data()
+        raw = self.data_fetcher.save_data(raw, self.paths_conf['raw'])
+        return raw
 
-    def clean(self, filename: str):
+    def clean(self, raw_obj: DataObjectFetcher) -> DataObjectCleaner:
         """Normalizacja danych z raw do processed"""
-        raw_file = self.data_cleaner.load_raw()
-        processed_data = self.data_cleaner.normalize(raw_file, self.paths_conf['processed'])
-        self.data_cleaner.save_data(processed_data)
-        return processed_data
+        data_obj = self.data_cleaner.load_raw(raw_obj)
+        normalised = self.data_cleaner.normalize(data_obj)
+        processed = self.data_cleaner.save_data(
+         normalised, self.paths_conf['processed']
+        )
+        return processed
 
-    def spark_transform(self):
-        """Ładowanie przetworzonych danych do PySpark i zapis do output (Parquet/Delta)"""
-        path_processed = os.path.join(self.paths_conf['processed'], "*.json")
-        df = self.spark_builder.read(path_processed)
+    def spark_transform(self, processed_obj: DataObjectCleaner) -> 'DataFrame':
+        """Ładowanie przetworzonych danych do PySpark i
+        zapis do output (Parquet/Delta)"""
+        df = self.spark_builder.read(processed_obj)
         self.spark_builder.save(df, self.paths_conf['output'])
         return df
-
-    def preview_parquet(self, n=5):
-        """Podejrzenie kilku wierszy z Parquet"""
-        df = self.spark_builder.read_parquet(os.path.join(self.paths_conf['output'], "*.parquet"))
-        df.show(n)

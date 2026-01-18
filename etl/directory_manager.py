@@ -22,6 +22,7 @@ class ResultObjectInfrastructure():
     folder: str | None
     error: str | None
 
+
 class DirectoryManager:
     def __init__(self, raw, processed, output, logs, tests):
         self.raw = raw

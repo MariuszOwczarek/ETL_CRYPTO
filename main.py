@@ -11,10 +11,9 @@ def main():
     pipeline = ETLPipeline(config)
 
     pipeline.ensure_dirs()
-    filename = pipeline.fetch()
-    pipeline.clean(filename)
-    pipeline.spark_transform()
-    pipeline.preview_parquet(5)
+    raw_obj = pipeline.fetch()
+    processed_obj = pipeline.clean(raw_obj)
+    pipeline.spark_transform(processed_obj)
 
 
 if __name__ == "__main__":

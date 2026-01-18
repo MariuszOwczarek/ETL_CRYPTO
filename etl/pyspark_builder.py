@@ -1,21 +1,23 @@
 from pyspark.sql import SparkSession
 import os
+from etl.cleaner import DataObjectCleaner
 from pyspark.sql.types import (StructField,
                                StructType,
                                StringType,
                                DoubleType)
 
-
-class SparkDataset:
-    def __init__(self):
-        java_home = (
+java_home = (
             "/Library/Java/JavaVirtualMachines/"
             "temurin-17.jdk/Contents/Home"
         )
-        os.environ['JAVA_HOME'] = java_home
+os.environ['JAVA_HOME'] = java_home
+
+
+class SparkDataset:
+    def __init__(self):
         self.spark = SparkSession.builder.appName('CryptoETL').getOrCreate()
 
-    def read(self, path):
+    def read(self, obj_cleaner: DataObjectCleaner):
         crypto_schema = StructType([
                 StructField("id", StringType(), True),
                 StructField("symbol", StringType(), True),
@@ -49,13 +51,10 @@ class SparkDataset:
 
         data = (self.spark.read.schema(crypto_schema)
                 .option("multiLine", True)
-                .json(path))
+                .json(obj_cleaner.full_path))
         return data
 
     def save(self, data, path):
+        if os.path.exists(path):
+            print(f"Overwriting existing Parquet at {path}")
         data.coalesce(1).write.mode("overwrite").parquet(path)
-
-    def read_parquet(self, path: str):
-        df = self.spark.read.parquet(path)
-        df.printSchema()
-        return df
