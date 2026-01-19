@@ -54,7 +54,7 @@ class SparkDataset:
                 .json(obj_cleaner.full_path))
         return data
 
-    def save(self, data, path):
-        if os.path.exists(path):
-            print(f"Overwriting existing Parquet at {path}")
-        data.coalesce(1).write.mode("overwrite").parquet(path)
+    def save(self, df, path, batch_id):
+        batch_path = os.path.join(path, batch_id)
+        df.coalesce(1).write.mode("overwrite").parquet(batch_path)
+        return batch_path

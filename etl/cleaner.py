@@ -14,6 +14,7 @@ class DataObjectCleaner:
     filename: str
     full_path: str
     load_timestamp: str
+    batch_id: str
 
 
 class DataCleaner:
@@ -29,7 +30,8 @@ class DataCleaner:
                 data=data,
                 filename=raw_obj.filename,
                 full_path=raw_obj.full_path,
-                load_timestamp=raw_obj.load_timestamp
+                load_timestamp=raw_obj.load_timestamp,
+                batch_id=raw_obj.batch_id
                 )
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error(f"Failed to load RAW data: {e}")
@@ -52,7 +54,8 @@ class DataCleaner:
             data=normalized_data,
             filename=data_obj.filename,
             full_path=data_obj.full_path,
-            load_timestamp=data_obj.load_timestamp
+            load_timestamp=data_obj.load_timestamp,
+            batch_id=data_obj.batch_id
         )
 
     def save_data(self, data_obj: DataObjectCleaner, processed_path: str) -> DataObjectCleaner:
@@ -67,5 +70,6 @@ class DataCleaner:
             data=data_obj.data,
             filename=data_obj.filename,
             full_path=processed_file_path,
-            load_timestamp=data_obj.load_timestamp
+            load_timestamp=data_obj.load_timestamp,
+            batch_id=data_obj.batch_id
             )

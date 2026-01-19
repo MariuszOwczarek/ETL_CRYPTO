@@ -51,5 +51,7 @@ class ETLPipeline:
         """Ładowanie przetworzonych danych do PySpark i
         zapis do output (Parquet/Delta)"""
         df = self.spark_builder.read(processed_obj)
-        self.spark_builder.save(df, self.paths_conf['output'])
+        self.spark_builder.save(
+            df, self.paths_conf['output'], processed_obj.batch_id
+        )
         return df
